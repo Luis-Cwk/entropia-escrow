@@ -1,0 +1,9 @@
+node_modules/
+.venv/
+__pycache__/
+.pytest_cache/
+artifacts/
+.glftest_cache/
+.gltest_cache/
+.secrets/
+.env
