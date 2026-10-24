@@ -3,118 +3,406 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Entropia Escrow | Consensus adjudication for agent commissions</title>
+  <title>Entropia Escrow · Consensus adjudication for agent commissions</title>
   <meta name="description" content="A GenLayer escrow for agent commissions that reads the deliverable and settles disputes with validator consensus.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       color-scheme: light;
-      --ink: #17151c;
-      --muted: #625d6d;
-      --line: #e6e1ed;
-      --paper: #fbf9fd;
-      --accent: #6d3ee8;
-      --accent-soft: #f0eaff;
+      --bg: #ffffff;
+      --ink: #000000;
+      --muted: rgba(0, 0, 0, 0.62);
+      --line: rgba(0, 0, 0, 0.14);
+      --line-strong: rgba(0, 0, 0, 0.42);
+      --soft: rgba(0, 0, 0, 0.04);
     }
+
     * { box-sizing: border-box; }
+
     html { scroll-behavior: smooth; }
+
     body {
       margin: 0;
-      background: var(--paper);
+      background: var(--bg);
       color: var(--ink);
-      font: 17px/1.65 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: "Space Grotesk", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 16px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
     }
-    a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
-    .wrap { width: min(980px, calc(100% - 40px)); margin: 0 auto; }
-    header { padding: 56px 0 36px; border-bottom: 1px solid var(--line); }
+
+    a {
+      color: var(--ink);
+      text-decoration: none;
+      border-bottom: 1px solid var(--line-strong);
+    }
+
+    a:hover { border-bottom-color: var(--ink); }
+
+    .wrap {
+      width: min(1080px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 28px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand {
+      display: inline-flex;
+      gap: 0.18em;
+      border-bottom: 0;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.34em;
+      text-transform: uppercase;
+    }
+
+    .top-meta {
+      margin: 0;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .hero {
+      padding: clamp(56px, 9vw, 104px) 0 clamp(40px, 6vw, 64px);
+      border-bottom: 1px solid var(--line);
+    }
+
     .eyebrow {
-      display: inline-flex; align-items: center; gap: 10px;
-      color: var(--accent); font-size: 13px; font-weight: 700;
-      letter-spacing: .12em; text-transform: uppercase;
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
     }
-    .eyebrow img { width: 34px; height: 34px; border-radius: 9px; }
-    h1 { margin: 22px 0 14px; font-size: clamp(38px, 7vw, 74px); line-height: .98; letter-spacing: -.045em; }
-    .lede { max-width: 760px; margin: 0; color: var(--muted); font-size: clamp(19px, 2.4vw, 24px); }
-    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+
+    h1 {
+      max-width: 900px;
+      margin: 0;
+      font-size: clamp(44px, 7.8vw, 96px);
+      font-weight: 300;
+      letter-spacing: -0.06em;
+      line-height: 0.96;
+    }
+
+    .lede {
+      max-width: 720px;
+      margin: 28px 0 0;
+      color: var(--muted);
+      font-size: clamp(18px, 2.2vw, 23px);
+      line-height: 1.45;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 30px;
+    }
+
     .button {
-      display: inline-flex; align-items: center; justify-content: center;
-      min-height: 46px; padding: 0 20px; border-radius: 999px;
-      background: var(--ink); color: #fff; font-weight: 700; text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0 18px;
+      border: 1px solid var(--ink);
+      border-radius: 2px;
+      background: var(--ink);
+      color: var(--bg);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      text-decoration: none;
     }
-    .button.secondary { background: transparent; color: var(--ink); border: 1px solid var(--line); }
-    main { padding: 48px 0 72px; }
-    section { padding: 30px 0; border-bottom: 1px solid var(--line); }
+
+    .button:hover {
+      background: var(--bg);
+      color: var(--ink);
+      border-bottom-color: var(--ink);
+    }
+
+    .button.secondary {
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    .button.secondary:hover {
+      background: var(--ink);
+      color: var(--bg);
+    }
+
+    main { padding: 0 0 64px; }
+
+    section {
+      padding: clamp(36px, 5vw, 56px) 0;
+      border-bottom: 1px solid var(--line);
+    }
+
     section:last-child { border-bottom: 0; }
-    h2 { margin: 0 0 18px; font-size: 26px; letter-spacing: -.02em; }
-    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
-    .card { padding: 20px; border: 1px solid var(--line); border-radius: 18px; background: #fff; }
-    .card h3 { margin: 0 0 8px; font-size: 17px; }
-    .card p { margin: 0; color: var(--muted); font-size: 15px; }
-    .steps { margin: 0; padding-left: 22px; }
-    .steps li { margin: 10px 0; }
-    .status { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 8px; }
-    .stat { padding: 18px; border-radius: 16px; background: var(--accent-soft); }
-    .stat strong { display: block; font-size: 28px; letter-spacing: -.03em; }
-    .stat span { color: var(--muted); font-size: 14px; }
-    code { padding: 2px 6px; border-radius: 6px; background: #f1edf7; font-size: .9em; }
-    footer { padding: 28px 0 40px; color: var(--muted); font-size: 14px; }
+
+    h2 {
+      margin: 0 0 22px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+
+    p { margin: 0 0 16px; }
+
+    p:last-child { margin-bottom: 0; }
+
+    .intro-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+      gap: clamp(24px, 4vw, 56px);
+      align-items: start;
+    }
+
+    .prose {
+      max-width: 680px;
+      color: var(--muted);
+      font-size: 17px;
+      line-height: 1.65;
+    }
+
+    .prose strong { color: var(--ink); font-weight: 500; }
+
+    .demo-shot {
+      display: block;
+      width: 100%;
+      height: auto;
+      border: 1px solid var(--line);
+    }
+
+    .caption {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .steps {
+      display: grid;
+      gap: 0;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      border-top: 1px solid var(--line);
+    }
+
+    .steps li {
+      display: grid;
+      grid-template-columns: 46px minmax(0, 1fr);
+      gap: 18px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+    }
+
+    .steps span {
+      color: var(--ink);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+    }
+
+    .steps strong {
+      color: var(--ink);
+      font-weight: 500;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 20px;
+    }
+
+    .stat {
+      padding: 20px 0 0;
+      border-top: 1px solid var(--ink);
+    }
+
+    .stat strong {
+      display: block;
+      font-size: clamp(32px, 4vw, 48px);
+      font-weight: 300;
+      letter-spacing: -0.05em;
+      line-height: 1;
+    }
+
+    .stat span {
+      display: block;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .card {
+      padding: 22px 22px 0 0;
+      border-right: 1px solid var(--line);
+    }
+
+    .card:last-child {
+      padding-right: 0;
+      border-right: 0;
+    }
+
+    .card p {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    code {
+      padding: 2px 5px;
+      border: 1px solid var(--line);
+      background: var(--soft);
+      font-family: "Space Grotesk", monospace;
+      font-size: 0.9em;
+    }
+
+    .command {
+      display: block;
+      margin: 14px 0 0;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      background: var(--soft);
+      font-family: "Space Grotesk", monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 24px 0 40px;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
     @media (max-width: 760px) {
-      header { padding-top: 34px; }
-      .grid, .status { grid-template-columns: 1fr; }
+      header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .intro-grid,
+      .stats,
+      .cards {
+        grid-template-columns: 1fr;
+      }
+
+      .card {
+        padding: 18px 0;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .card:last-child { border-bottom: 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <div class="eyebrow"><img src="logo.png" alt=""> Entropia Escrow</div>
-      <h1>Work gets delivered.<br>Disputes get decided.</h1>
-      <p class="lede">
-        A GenLayer escrow for agent commissions. The buyer deposits GEN, the seller delivers a URL,
-        and if the work is disputed, validators read the deliverable and settle it with an onchain verdict.
-      </p>
-      <div class="actions">
-        <a class="button" href="https://explorer-studio.genlayer.com/address/0x6f482A969e605e824a73fC0Fd9225490e90Dc307">Open the Studio demo</a>
-        <a class="button secondary" href="https://github.com/Luis-Cwk/entropia-escrow">View the source</a>
-      </div>
+      <a class="brand" href="./" aria-label="Petra">
+        <span>P</span><span>E</span><span>T</span><span>R</span><span>A</span>
+      </a>
+      <p class="top-meta">Entropia Escrow · GenLayer</p>
     </header>
+
+    <div class="hero">
+      <p class="eyebrow">Intelligent Contract · Studio</p>
+      <h1>Work gets delivered.<br>Disputes get decided.</h1>
+      <p class="lede">A GenLayer escrow for agent commissions. The buyer deposits GEN, the seller delivers a URL, and if the work is disputed, validators read the deliverable and settle it with an onchain verdict.</p>
+      <div class="actions">
+        <a class="button" href="https://explorer-studio.genlayer.com/address/0x6f482A969e605e824a73fC0Fd9225490e90Dc307" target="_blank" rel="noreferrer">Open Studio contract</a>
+        <a class="button secondary" href="https://github.com/Luis-Cwk/entropia-escrow" target="_blank" rel="noreferrer">View source</a>
+      </div>
+    </div>
 
     <main>
       <section>
-        <h2>Why this exists</h2>
-        <p>
-          Smart contracts can move money. They cannot read a delivery page, compare a poem to a brief,
-          or decide whether a video actually matches what was commissioned. Today that gap is filled by
-          a platform, an oracle, or a support ticket. Entropia Escrow puts that judgment inside GenLayer,
-          where multiple validators can reach an independent consensus on the evidence.
-        </p>
+        <h2>The demo</h2>
+        <div class="intro-grid">
+          <div class="prose">
+            <p><strong>The browser never sees a private key.</strong> A small Node server holds the Studio demo accounts, calls the contract, and exposes four actions: create, deliver, dispute, and resolve.</p>
+            <p>The interface reads the order state directly from GenLayer and disables steps that do not belong to the current state. Studio is gasless, so the demo needs no faucet and no real GEN.</p>
+            <p>Run it locally, or read the tutorial for the full contract walkthrough.</p>
+            <p>
+              <a href="https://github.com/Luis-Cwk/entropia-escrow/blob/main/docs/tutorial-adjudicacion-consenso.md" target="_blank" rel="noreferrer">Read the tutorial</a>
+              <span class="top-meta"> · </span>
+              <a href="https://github.com/Luis-Cwk/entropia-escrow" target="_blank" rel="noreferrer">Repository</a>
+            </p>
+            <code class="command">node scripts/serve-demo.mjs
+# open http://localhost:4317</code>
+          </div>
+          <div>
+            <img class="demo-shot" src="escrow-demo.png" alt="Entropia Escrow web demo showing a refunded order">
+            <p class="caption">Studio demo · ord-2 · verdict refund. The work did not match the brief.</p>
+          </div>
+        </div>
       </section>
 
       <section>
         <h2>How it works</h2>
         <ol class="steps">
-          <li>The buyer calls <code>create_order</code> with a brief and a GEN deposit.</li>
-          <li>The seller calls <code>submit_delivery</code> with a public URL.</li>
-          <li>If the buyer disputes, <code>resolve_dispute</code> fetches the page, asks an LLM to quote evidence and mark each requirement, and validators rerun the same task.</li>
-          <li>The contract releases the deposit to the seller or refunds the buyer, and stores the verdict onchain.</li>
+          <li><span>01</span><div><strong>The buyer creates an order.</strong> A brief and a GEN deposit go into escrow.</div></li>
+          <li><span>02</span><div><strong>The seller submits a URL.</strong> The delivery is public and can be fetched by validators.</div></li>
+          <li><span>03</span><div><strong>A dispute triggers the judgment.</strong> The leader fetches the page, quotes evidence, and marks each requirement as MET or NOT MET.</div></li>
+          <li><span>04</span><div><strong>Validators rerun the same task.</strong> They compare the decision and the score. The escrow releases or refunds.</div></li>
         </ol>
       </section>
 
       <section>
         <h2>Verified</h2>
-        <div class="status">
+        <div class="stats">
           <div class="stat"><strong>8/8</strong><span>direct contract tests</span></div>
           <div class="stat"><strong>2/2</strong><span>Studio verdicts: release and refund</span></div>
           <div class="stat"><strong>1</strong><span>focused Intelligent Contract</span></div>
         </div>
-        <p style="margin-top:18px">
-          The Studio demo has settled both sides of the flow: a delivery that matches the brief was
-          released, and an unrelated page was refunded. The contract and tests live in the repository.
-        </p>
+        <p class="prose" style="margin-top:22px">The Studio demo has settled both sides of the flow: a delivery that matches the brief was released, and an unrelated page was refunded. The contract and tests live in the repository.</p>
       </section>
 
       <section>
         <h2>Built for agents</h2>
-        <div class="grid">
+        <div class="cards">
           <div class="card">
             <h3>Agent commissions</h3>
             <p>Creative work sold by an ERC-8004 agent can use the same escrow without a platform in the middle.</p>
@@ -132,19 +420,14 @@
 
       <section>
         <h2>Status</h2>
-        <p>
-          The Studio demo is live. Bradbury Phase 2 is live on Arbitrum Orbit and the escrow deployment
-          is waiting for testnet GEN from the faucet. The previous Bradbury deployment is historical and
-          is not used for new reviews.
-        </p>
-        <p>
-          Repository: <a href="https://github.com/Luis-Cwk/entropia-escrow">github.com/Luis-Cwk/entropia-escrow</a>
-        </p>
+        <p class="prose">The Studio demo is live. Bradbury Phase 2 is live on Arbitrum Orbit and the escrow deployment is waiting for testnet GEN from the faucet. The previous Bradbury deployment is historical and is not used for new reviews.</p>
+        <p class="prose">Repository: <a href="https://github.com/Luis-Cwk/entropia-escrow" target="_blank" rel="noreferrer">github.com/Luis-Cwk/entropia-escrow</a></p>
       </section>
     </main>
 
     <footer>
-      Entropia Escrow, built by Petra (Luis Betancourt). MIT licensed.
+      <span>Entropia Escrow · built by Petra (Luis Betancourt)</span>
+      <span>MIT licensed</span>
     </footer>
   </div>
 </body>

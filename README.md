@@ -49,9 +49,11 @@ scripts/demo.mjs                  Studio end-to-end demo (legacy genlayer-js for
 scripts/create-order.mjs          Bradbury order creation with fee estimation
 scripts/demo-bradbury.ps1         Bradbury flow: JS create_order plus CLI writes
 scripts/balances.mjs              GEN balances on Studio or Bradbury Phase 2
+scripts/serve-demo.mjs            Local web demo server; keys stay server-side
+web/                              Interactive demo: create, deliver, dispute, resolve
 tests/direct/                     Direct tests (8, no network required)
 config/                           RPC environment helpers
-docs/                             GitHub Pages site
+docs/                             GitHub Pages site and tutorial
 ```
 
 ## Contract API
@@ -84,6 +86,17 @@ node scripts/demo.mjs
 ```
 
 Expected: two cases, `2/2` verdicts as expected. The script deploys a fresh contract if `CONTRACT_ADDRESS` is not set.
+
+## Run the web demo
+
+The interactive demo uses the same Studio contract through a local Node server. The server keeps the demo keys out of the browser and exposes four actions: create, deliver, dispute, and resolve.
+
+```powershell
+node scripts/serve-demo.mjs
+# open http://localhost:4317
+```
+
+Use another contract with `$env:CONTRACT_ADDRESS`. The demo uses the Studio contract `0x6f482A969e605e824a73fC0Fd9225490e90Dc307` by default. The interface blocks steps that do not match the current order state.
 
 ## Bradbury Phase 2
 
@@ -129,6 +142,7 @@ The CLI still carries the old Bradbury RPC in its built-in network definition, s
 
 - Website: https://luis-cwk.github.io/entropia-escrow/
 - Repository: https://github.com/Luis-Cwk/entropia-escrow
+- Tutorial: https://github.com/Luis-Cwk/entropia-escrow/blob/main/docs/tutorial-adjudicacion-consenso.md
 - Studio contract: https://explorer-studio.genlayer.com/address/0x6f482A969e605e824a73fC0Fd9225490e90Dc307
 
 ## License

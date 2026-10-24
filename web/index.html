@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Escrow de composiciones · GenLayer Studio</title>
+  <meta name="description" content="Demo de un escrow de composiciones con adjudicación por consenso en GenLayer Studio.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="/" aria-label="Petra">
+      <span>P</span><span>E</span><span>T</span><span>R</span><span>A</span>
+    </a>
+    <p class="top-meta">GenLayer · Escrow Studio</p>
+  </header>
+
+  <main>
+    <section class="intro">
+      <p class="eyebrow">Intelligent Contract · Studio</p>
+      <h1>Adjudicación por consenso</h1>
+      <p class="lede">El comprador deposita GEN, el agente entrega una URL y, si hay desacuerdo, los validadores leen el entregable y deciden si cumple el brief. No es un if/else: es una decisión con evidencia.</p>
+      <div class="intro-links">
+        <a id="contract-link" href="https://explorer-studio.genlayer.com/address/0x3F6ff110fa8DA1D3517521cE697BD75377C7D721" target="_blank" rel="noreferrer">Ver contrato en Studio</a>
+        <span class="dot">·</span>
+        <a href="https://github.com/Luis-Cwk/entropia-escrow" target="_blank" rel="noreferrer">Repositorio</a>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="panel">
+        <div class="panel-head">
+          <h2>Estado</h2>
+          <span class="tag" id="network">Studio · gasless</span>
+        </div>
+        <dl class="state" id="state">
+          <div><dt>Contrato</dt><dd id="state-contract">Cargando…</dd></div>
+          <div><dt>Seller</dt><dd id="state-seller">Cargando…</dd></div>
+          <div><dt>Órdenes</dt><dd id="state-count">Cargando…</dd></div>
+          <div><dt>Orden actual</dt><dd id="state-order">Sin orden</dd></div>
+          <div><dt>Estado</dt><dd id="state-status">Sin datos</dd></div>
+          <div><dt>Veredicto</dt><dd id="state-verdict">Sin datos</dd></div>
+        </dl>
+        <p class="hint">El depósito de la demo es 0.5 GEN en Studio. No hay fondos reales.</p>
+      </article>
+
+      <article class="panel">
+        <div class="panel-head">
+          <h2>Flujo</h2>
+          <span class="tag">4 pasos</span>
+        </div>
+        <label for="brief">Brief de la comisión</label>
+        <textarea id="brief" rows="4">Pieza de videodanza generativa sobre cuerpo y tecnologia. Tema: soberania de datos y danza contemporanea expandida. Formato: texto poetico para metadata NFT.</textarea>
+
+        <label for="delivery">URL de entrega</label>
+        <input id="delivery" type="url" value="https://example.com/" autocomplete="off">
+
+        <label for="reason">Motivo de la disputa</label>
+        <textarea id="reason" rows="2">La entrega es una pagina generica que no tiene relacion con el brief.</textarea>
+
+        <div class="actions">
+          <button type="button" data-action="create">1 · Crear orden</button>
+          <button type="button" data-action="deliver">2 · Entregar</button>
+          <button type="button" data-action="dispute">3 · Disputar</button>
+          <button type="button" data-action="resolve" class="primary">4 · Resolver</button>
+        </div>
+        <p class="hint">El paso 4 corre el juicio con web + LLM. Puede tardar uno o dos minutos.</p>
+      </article>
+    </section>
+
+    <section class="panel log-panel">
+      <div class="panel-head">
+        <h2>Registro</h2>
+        <button type="button" id="clear-log" class="link-button">Limpiar</button>
+      </div>
+      <pre id="log" aria-live="polite">Listo. Crea una orden para empezar.</pre>
+    </section>
+  </main>
+
+  <footer>
+    <p>Petra · 2026</p>
+    <p>GenLayer Studio · demo local</p>
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>
