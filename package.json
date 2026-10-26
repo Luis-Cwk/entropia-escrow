@@ -2,6 +2,7 @@
   "name": "genlayer-project",
   "type": "module",
   "devDependencies": {
+    "esbuild": "^0.25.0",
     "genlayer-js": "2.0.0-rc.2",
     "genlayer-js-legacy": "npm:genlayer-js@1.1.8"
   }

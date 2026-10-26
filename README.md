@@ -49,11 +49,12 @@ scripts/demo.mjs                  Studio end-to-end demo (legacy genlayer-js for
 scripts/create-order.mjs          Bradbury order creation with fee estimation
 scripts/demo-bradbury.ps1         Bradbury flow: JS create_order plus CLI writes
 scripts/balances.mjs              GEN balances on Studio or Bradbury Phase 2
-scripts/serve-demo.mjs            Local web demo server; keys stay server-side
-web/                              Interactive demo: create, deliver, dispute, resolve
+scripts/serve-demo.mjs            Legacy local demo server (keys stay server-side)
+scripts/build-web.mjs             Builds the static demo into docs/ for GitHub Pages
+web/                              Demo source: ephemeral accounts, no keys
 tests/direct/                     Direct tests (8, no network required)
 config/                           RPC environment helpers
-docs/                             GitHub Pages site and tutorial
+docs/                             Live demo on GitHub Pages, tutorial and submission notes
 ```
 
 ## Contract API
@@ -87,16 +88,18 @@ node scripts/demo.mjs
 
 Expected: two cases, `2/2` verdicts as expected. The script deploys a fresh contract if `CONTRACT_ADDRESS` is not set.
 
-## Run the web demo
+## Try the live demo
 
-The interactive demo uses the same Studio contract through a local Node server. The server keeps the demo keys out of the browser and exposes four actions: create, deliver, dispute, and resolve.
+https://luis-cwk.github.io/entropia-escrow/
+
+Each visit creates two ephemeral accounts in the browser, funds them from the Studio sandbox, deploys a fresh contract and runs the full flow: create, deliver, dispute, and resolve. No wallet, no keys, no real funds.
+
+Rebuild the static site after editing `web/`:
 
 ```powershell
-node scripts/serve-demo.mjs
-# open http://localhost:4317
+npm install
+node scripts/build-web.mjs
 ```
-
-Use another contract with `$env:CONTRACT_ADDRESS`. The demo uses the Studio contract `0x6f482A969e605e824a73fC0Fd9225490e90Dc307` by default. The interface blocks steps that do not match the current order state.
 
 ## Bradbury Phase 2
 

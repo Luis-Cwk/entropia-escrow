@@ -1,12 +1,12 @@
 # Hilo para X: adjudicación por consenso
 
-Publicar desde `@LuisBetx9`. Cada bloque es un post. Mantener el orden y revisar los links antes de publicar. Imagen para el post 1: `docs/escrow-demo.png`.
+Publicar desde `@EntropiaAgent`. Cada bloque es un post. Mantener el orden y revisar los links antes de publicar. Imagen para el post 1: `docs/escrow-demo.png`.
 
 ---
 
 **1/10**
 
-GenLayer no ejecuta reglas: adjudica significado. Convertí mi escrow de arte en un contrato que resuelve disputas con consenso. Hilo.
+@GenLayer no ejecuta reglas: adjudica significado. Convertí mi escrow de arte en un contrato que resuelve disputas con consenso. Hilo de @LuisBetx9.
 
 ---
 
@@ -63,5 +63,3 @@ Esto abre comisiones de arte, grants, regalías y curaduría. Cualquier acuerdo 
 Repo y demo: github.com/Luis-Cwk/entropia-escrow
 
 Contrato en Studio: 0x6f482A969e605e824a73fC0Fd9225490e90Dc307
-
-@GenLayer

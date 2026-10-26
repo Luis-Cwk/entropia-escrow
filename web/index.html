@@ -4,17 +4,17 @@
   <meta charset="UTF-8">
   <meta name="google" content="notranslate">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Escrow de composiciones · GenLayer Studio</title>
-  <meta name="description" content="Demo de un escrow de composiciones con adjudicación por consenso en GenLayer Studio.">
+  <title>Entropia Escrow · demo en vivo en GenLayer Studio</title>
+  <meta name="description" content="Demo usable de un escrow de comisiones creativas con adjudicación por consenso en GenLayer Studio.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <header class="top">
-    <a class="brand" href="/" aria-label="Petra">
-      <span>P</span><span>E</span><span>T</span><span>R</span><span>A</span>
+    <a class="brand" href="./" aria-label="Entropia Escrow">
+      <span>E</span><span>N</span><span>T</span><span>R</span><span>O</span><span>P</span><span>I</span><span>A</span>
     </a>
     <p class="top-meta">GenLayer · Escrow Studio</p>
   </header>
@@ -23,11 +23,13 @@
     <section class="intro">
       <p class="eyebrow">Intelligent Contract · Studio</p>
       <h1>Adjudicación por consenso</h1>
-      <p class="lede">El comprador deposita GEN, el agente entrega una URL y, si hay desacuerdo, los validadores leen el entregable y deciden si cumple el brief. No es un if/else: es una decisión con evidencia.</p>
+      <p class="lede">El comprador deposita GEN, el agente entrega una URL y, si hay desacuerdo, los validadores leen el entregable y deciden si cumple el brief. No es un if/else: es una decisión con evidencia. Esta página corre el flujo completo desde tu navegador.</p>
       <div class="intro-links">
-        <a id="contract-link" href="https://explorer-studio.genlayer.com/address/0x3F6ff110fa8DA1D3517521cE697BD75377C7D721" target="_blank" rel="noreferrer">Ver contrato en Studio</a>
+        <a id="contract-link" href="https://explorer-studio.genlayer.com" target="_blank" rel="noreferrer">Explorer de Studio</a>
         <span class="dot">·</span>
         <a href="https://github.com/Luis-Cwk/entropia-escrow" target="_blank" rel="noreferrer">Repositorio</a>
+        <span class="dot">·</span>
+        <a href="https://github.com/Luis-Cwk/entropia-escrow/blob/main/docs/tutorial-adjudicacion-consenso.md" target="_blank" rel="noreferrer">Tutorial</a>
       </div>
     </section>
 
@@ -38,14 +40,15 @@
           <span class="tag" id="network">Studio · gasless</span>
         </div>
         <dl class="state" id="state">
-          <div><dt>Contrato</dt><dd id="state-contract">Cargando…</dd></div>
-          <div><dt>Seller</dt><dd id="state-seller">Cargando…</dd></div>
-          <div><dt>Órdenes</dt><dd id="state-count">Cargando…</dd></div>
+          <div><dt>Contrato</dt><dd id="state-contract">Sin desplegar</dd></div>
+          <div><dt>Seller efímero</dt><dd id="state-seller">Cargando…</dd></div>
+          <div><dt>Buyer efímero</dt><dd id="state-buyer">Cargando…</dd></div>
+          <div><dt>Órdenes</dt><dd id="state-count">0</dd></div>
           <div><dt>Orden actual</dt><dd id="state-order">Sin orden</dd></div>
           <div><dt>Estado</dt><dd id="state-status">Sin datos</dd></div>
           <div><dt>Veredicto</dt><dd id="state-verdict">Sin datos</dd></div>
         </dl>
-        <p class="hint">El depósito de la demo es 0.5 GEN en Studio. No hay fondos reales.</p>
+        <p class="hint">Cada visita genera dos cuentas efímeras en esta pestaña y las fondea con el sandbox de Studio. No se pide wallet, no hay llaves guardadas y no hay fondos reales.</p>
       </article>
 
       <article class="panel">
@@ -63,12 +66,12 @@
         <textarea id="reason" rows="2">La entrega es una pagina generica que no tiene relacion con el brief.</textarea>
 
         <div class="actions">
-          <button type="button" data-action="create">1 · Crear orden</button>
+          <button type="button" data-action="start">1 · Desplegar y crear orden</button>
           <button type="button" data-action="deliver">2 · Entregar</button>
           <button type="button" data-action="dispute">3 · Disputar</button>
           <button type="button" data-action="resolve" class="primary">4 · Resolver</button>
         </div>
-        <p class="hint">El paso 4 corre el juicio con web + LLM. Puede tardar uno o dos minutos.</p>
+        <p class="hint">El paso 1 despliega un contrato nuevo para tu sesión. El paso 4 corre el juicio con web + LLM y puede tardar uno o dos minutos.</p>
       </article>
     </section>
 
@@ -77,15 +80,15 @@
         <h2>Registro</h2>
         <button type="button" id="clear-log" class="link-button">Limpiar</button>
       </div>
-      <pre id="log" aria-live="polite">Listo. Crea una orden para empezar.</pre>
+      <pre id="log" aria-live="polite">Listo. Empieza con el paso 1.</pre>
     </section>
   </main>
 
   <footer>
     <p>Petra · 2026</p>
-    <p>GenLayer Studio · demo local</p>
+    <p>GenLayer Studio · demo en vivo</p>
   </footer>
 
-  <script src="/app.js"></script>
+  <script src="./app.js"></script>
 </body>
 </html>
