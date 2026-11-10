@@ -38447,6 +38447,8 @@ ${prettyStateOverride(stateOverride)}`;
   // web/wallet-entry.js
   var CONTRACT = window.ENTROPIA_CONTRACT;
   var STORAGE_KEY = "entropia-buyer-key";
+  var CHAINS = { studionet, testnetBradbury };
+  var CHAIN = CHAINS[window.ENTROPIA_CHAIN || "studionet"] || studionet;
   function loadKey() {
     let key = localStorage.getItem(STORAGE_KEY);
     if (!key) {
@@ -38456,7 +38458,7 @@ ${prettyStateOverride(stateOverride)}`;
     return key;
   }
   var account = createAccount(loadKey());
-  var client = createClient2({ chain: studionet, account });
+  var client = createClient2({ chain: CHAIN, account });
   async function wait2(hash3) {
     await new Promise((r) => setTimeout(r, 3e3));
     const receipt = await client.waitForTransactionReceipt({
@@ -38472,6 +38474,15 @@ ${prettyStateOverride(stateOverride)}`;
   }
   window.GenLayerWallet = {
     address: account.address,
+    chain: window.ENTROPIA_CHAIN || "studionet",
+    exportKey() {
+      return localStorage.getItem(STORAGE_KEY);
+    },
+    importKey(raw) {
+      const value = String(raw || "").trim();
+      if (!/^0x[0-9a-fA-F]{64}$/.test(value)) throw new Error("La llave debe ser 0x y 64 caracteres hex");
+      localStorage.setItem(STORAGE_KEY, value);
+    },
     async createOrder(brief, amountAtto) {
       const hash3 = await client.writeContract({
         address: CONTRACT,

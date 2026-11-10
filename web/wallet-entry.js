@@ -1,9 +1,11 @@
 import { createClient, createAccount, generatePrivateKey } from "genlayer-js-legacy";
-import { studionet } from "genlayer-js-legacy/chains";
+import { studionet, testnetBradbury } from "genlayer-js-legacy/chains";
 import { TransactionStatus } from "genlayer-js-legacy/types";
 
 const CONTRACT = window.ENTROPIA_CONTRACT;
 const STORAGE_KEY = "entropia-buyer-key";
+const CHAINS = { studionet, testnetBradbury };
+const CHAIN = CHAINS[window.ENTROPIA_CHAIN || "studionet"] || studionet;
 
 function loadKey() {
   let key = localStorage.getItem(STORAGE_KEY);
@@ -15,7 +17,7 @@ function loadKey() {
 }
 
 const account = createAccount(loadKey());
-const client = createClient({ chain: studionet, account });
+const client = createClient({ chain: CHAIN, account });
 
 async function wait(hash) {
   await new Promise((r) => setTimeout(r, 3000));
@@ -34,6 +36,15 @@ async function wait(hash) {
 
 window.GenLayerWallet = {
   address: account.address,
+  chain: window.ENTROPIA_CHAIN || "studionet",
+  exportKey() {
+    return localStorage.getItem(STORAGE_KEY);
+  },
+  importKey(raw) {
+    const value = String(raw || "").trim();
+    if (!/^0x[0-9a-fA-F]{64}$/.test(value)) throw new Error("La llave debe ser 0x y 64 caracteres hex");
+    localStorage.setItem(STORAGE_KEY, value);
+  },
   async createOrder(brief, amountAtto) {
     const hash = await client.writeContract({
       address: CONTRACT,

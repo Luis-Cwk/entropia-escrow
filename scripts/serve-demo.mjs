@@ -3,7 +3,7 @@ import { readFileSync, existsSync } from "fs";
 import { extname, join, normalize, resolve } from "path";
 import { fileURLToPath } from "url";
 import { createClient, createAccount, generatePrivateKey } from "genlayer-js-legacy";
-import { studionet } from "genlayer-js-legacy/chains";
+import { studionet, testnetBradbury } from "genlayer-js-legacy/chains";
 import { TransactionStatus } from "genlayer-js-legacy/types";
 
 const ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)));
@@ -14,6 +14,9 @@ const ENV_KEYS =
     ? { seller: process.env.SELLER_PRIVATE_KEY, buyer: process.env.BUYER_PRIVATE_KEY }
     : null;
 const PORT = Number(process.env.PORT || 4317);
+const CHAINS = { studionet, testnetBradbury };
+const NETWORK = process.env.GENLAYER_NETWORK || "studionet";
+const chain = CHAINS[NETWORK] || studionet;
 const CONTRACT_ADDRESS =
   process.env.CONTRACT_ADDRESS || "0xe41976f9C67CafF519EbC357Ae9284a4EE340aC0";
 const DEPOSIT_ATTO = 500000000000000000n;
@@ -30,8 +33,8 @@ if (!keys) {
 
 const sellerAccount = createAccount(keys?.seller || generatePrivateKey());
 const buyerAccount = createAccount(keys?.buyer || generatePrivateKey());
-const seller = createClient({ chain: studionet, account: sellerAccount });
-const buyer = createClient({ chain: studionet, account: buyerAccount });
+const seller = createClient({ chain, account: sellerAccount });
+const buyer = createClient({ chain, account: buyerAccount });
 
 let writeQueue = Promise.resolve();
 
@@ -130,7 +133,7 @@ async function bodyJson(req) {
 
 async function handleAction(action, payload) {
   if (action === "health") {
-    return { ok: true, contract: CONTRACT_ADDRESS, seller: sellerAccount.address, writable: Boolean(keys) };
+    return { ok: true, contract: CONTRACT_ADDRESS, seller: sellerAccount.address, writable: Boolean(keys), network: NETWORK };
   }
   if (action === "state") return readState();
 

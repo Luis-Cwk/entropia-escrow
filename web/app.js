@@ -175,6 +175,24 @@ document.getElementById("clear-log").addEventListener("click", () => {
   els.log.textContent = "Listo.";
 });
 
+document.getElementById("export-key").addEventListener("click", () => {
+  const key = window.GenLayerWallet?.exportKey?.();
+  if (!key) return log("No hay wallet en esta pagina.");
+  log("Llave lista en el cuadro. Guardala fuera del navegador.");
+  prompt("Tu llave. Guardala fuera del navegador:", key);
+});
+
+document.getElementById("import-key").addEventListener("click", () => {
+  const key = prompt("Pega la llave (0x y 64 caracteres hex):");
+  if (!key) return;
+  try {
+    window.GenLayerWallet.importKey(key);
+    location.reload();
+  } catch (error) {
+    log(`Error: ${error.message}`);
+  }
+});
+
 setBusy(true);
 refresh()
   .then(() => setBusy(false))
