@@ -2,7 +2,7 @@ import { createServer } from "http";
 import { readFileSync, existsSync } from "fs";
 import { extname, join, normalize, resolve } from "path";
 import { fileURLToPath } from "url";
-import { createClient, createAccount } from "genlayer-js-legacy";
+import { createClient, createAccount, generatePrivateKey } from "genlayer-js-legacy";
 import { studionet } from "genlayer-js-legacy/chains";
 import { TransactionStatus } from "genlayer-js-legacy/types";
 
@@ -20,14 +20,16 @@ const DEPOSIT_ATTO = 500000000000000000n;
 const DEFAULT_BRIEF =
   "Pieza de videodanza generativa sobre cuerpo y tecnologia. Tema: soberania de datos y danza contemporanea expandida. Formato: texto poetico para metadata NFT.";
 
-if (!ENV_KEYS && !existsSync(KEYS_PATH)) {
-  console.error(
-    "Faltan llaves: define SELLER_PRIVATE_KEY y BUYER_PRIVATE_KEY, o corre scripts/demo.mjs para generarlas."
+const keys =
+  ENV_KEYS || (existsSync(KEYS_PATH) ? JSON.parse(readFileSync(KEYS_PATH, "utf8")) : null);
+if (!keys) {
+  console.warn(
+    "Sin llaves: modo lectura. Define SELLER_PRIVATE_KEY y BUYER_PRIVATE_KEY para habilitar escrituras."
   );
-  process.exit(1);
 }
 
-const keys = ENV_KEYS || JSON.parse(readFileSync(KEYS_PATH, "utf8"));
+const sellerAccount = createAccount(keys?.seller || generatePrivateKey());
+const buyerAccount = createAccount(keys?.buyer || generatePrivateKey());
 const sellerAccount = createAccount(keys.seller);
 const buyerAccount = createAccount(keys.buyer);
 const seller = createClient({ chain: studionet, account: sellerAccount });
@@ -130,7 +132,7 @@ async function bodyJson(req) {
 
 async function handleAction(action, payload) {
   if (action === "health") {
-    return { ok: true, contract: CONTRACT_ADDRESS, seller: sellerAccount.address };
+    return { ok: true, contract: CONTRACT_ADDRESS, seller: sellerAccount.address, writable: Boolean(keys) };
   }
   if (action === "state") return readState();
 
