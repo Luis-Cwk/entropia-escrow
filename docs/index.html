@@ -66,12 +66,13 @@
         <textarea id="reason" rows="2">La entrega es una pagina generica que no tiene relacion con el brief.</textarea>
 
         <div class="actions">
-          <button type="button" data-action="start">1 · Desplegar y crear orden</button>
+          <button type="button" data-action="create">1 · Crear orden</button>
           <button type="button" data-action="deliver">2 · Entregar</button>
-          <button type="button" data-action="dispute">3 · Disputar</button>
-          <button type="button" data-action="resolve" class="primary">4 · Resolver</button>
+          <button type="button" data-action="approve">3 · Aprobar</button>
+          <button type="button" data-action="dispute">4 · Disputar</button>
+          <button type="button" data-action="resolve" class="primary">5 · Resolver</button>
         </div>
-        <p class="hint">El paso 1 despliega un contrato nuevo para tu sesión. El paso 4 corre el juicio con web + LLM y puede tardar uno o dos minutos.</p>
+        <p class="hint">El paso 1 deposita 0.5 GEN en el contrato ya desplegado. Entre aprobar y disputar eliges tú; si no eliges en 7 días, cualquiera puede disparar el juicio. El paso 5 corre web + LLM y puede tardar uno o dos minutos.</p>
       </article>
     </section>
 
@@ -89,6 +90,7 @@
     <p>GenLayer Studio · demo en vivo</p>
   </footer>
 
+  <script>window.ENTROPIA_API = "https://entropia-escrow.onrender.com";</script>
   <script src="./app.js"></script>
 </body>
 </html>
