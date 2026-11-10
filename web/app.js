@@ -128,6 +128,7 @@ async function run(action) {
         const state = await refresh();
         orderId = `ms-${state.orderCount - 1}`;
         localStorage.setItem("entropia-studio-order", orderId);
+        await refresh();
         log(`Listo · ${orderId} · firmada por ${W.address}`);
         return;
       }
