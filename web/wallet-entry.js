@@ -37,14 +37,6 @@ async function wait(hash) {
 window.GenLayerWallet = {
   address: account.address,
   chain: window.ENTROPIA_CHAIN || "studionet",
-  exportKey() {
-    return localStorage.getItem(STORAGE_KEY);
-  },
-  importKey(raw) {
-    const value = String(raw || "").trim();
-    if (!/^0x[0-9a-fA-F]{64}$/.test(value)) throw new Error("La llave debe ser 0x y 64 caracteres hex");
-    localStorage.setItem(STORAGE_KEY, value);
-  },
   async createOrder(brief, amountAtto) {
     const hash = await client.writeContract({
       address: CONTRACT,
