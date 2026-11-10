@@ -6,7 +6,7 @@
  */
 import { spawn } from "child_process";
 
-const PORT = 4319;
+const PORT = 4321;
 const BASE = `http://127.0.0.1:${PORT}`;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -34,9 +34,9 @@ function ms(order) {
 }
 
 async function waitReady() {
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 60; i++) {
     try {
-      await api("state");
+      await api("health");
       return;
     } catch {
       await sleep(500);

@@ -30,8 +30,6 @@ if (!keys) {
 
 const sellerAccount = createAccount(keys?.seller || generatePrivateKey());
 const buyerAccount = createAccount(keys?.buyer || generatePrivateKey());
-const sellerAccount = createAccount(keys.seller);
-const buyerAccount = createAccount(keys.buyer);
 const seller = createClient({ chain: studionet, account: sellerAccount });
 const buyer = createClient({ chain: studionet, account: buyerAccount });
 
