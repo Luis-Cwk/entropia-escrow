@@ -70,7 +70,9 @@ function currentOrder(state) {
 function renderState(state) {
   els.contract.textContent = state.contract;
   els.seller.textContent = state.seller;
-  if (els.buyer) els.buyer.textContent = state.buyer || "Sin datos";
+  if (els.buyer) {
+    els.buyer.textContent = window.GenLayerWallet?.address || state.buyer || "Sin datos";
+  }
   els.count.textContent = String(state.orderCount);
   els.contractLink.href = `https://explorer-studio.genlayer.com/address/${state.contract}`;
   els.network.textContent = "Studio · gasless";
@@ -117,6 +119,24 @@ async function run(action) {
   try {
     let path = `/api/${action}`;
     let payload = { orderId };
+
+    const W = window.GenLayerWallet;
+    const walletAction = W && ["create", "approve", "dispute"].includes(action);
+    if (walletAction) {
+      if (action === "create") {
+        await W.createOrder(els.brief.value.trim(), "500000000000000000");
+        const state = await refresh();
+        orderId = `ms-${state.orderCount - 1}`;
+        localStorage.setItem("entropia-studio-order", orderId);
+        log(`Listo · ${orderId} · firmada por ${W.address}`);
+        return;
+      }
+      if (action === "approve") await W.approve(orderId);
+      if (action === "dispute") await W.dispute(orderId, els.reason.value.trim());
+      log(`Listo · ${action} · firmada por ${W.address}`);
+      await refresh();
+      return;
+    }
 
     if (action === "create") {
       payload = { brief: els.brief.value.trim() };
