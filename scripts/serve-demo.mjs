@@ -9,19 +9,25 @@ import { TransactionStatus } from "genlayer-js-legacy/types";
 const ROOT = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const WEB_ROOT = join(ROOT, "web");
 const KEYS_PATH = join(ROOT, ".secrets", "demo-keys.json");
+const ENV_KEYS =
+  process.env.SELLER_PRIVATE_KEY && process.env.BUYER_PRIVATE_KEY
+    ? { seller: process.env.SELLER_PRIVATE_KEY, buyer: process.env.BUYER_PRIVATE_KEY }
+    : null;
 const PORT = Number(process.env.PORT || 4317);
 const CONTRACT_ADDRESS =
-  process.env.CONTRACT_ADDRESS || "0x6f482A969e605e824a73fC0Fd9225490e90Dc307";
+  process.env.CONTRACT_ADDRESS || "0xe41976f9C67CafF519EbC357Ae9284a4EE340aC0";
 const DEPOSIT_ATTO = 500000000000000000n;
 const DEFAULT_BRIEF =
   "Pieza de videodanza generativa sobre cuerpo y tecnologia. Tema: soberania de datos y danza contemporanea expandida. Formato: texto poetico para metadata NFT.";
 
-if (!existsSync(KEYS_PATH)) {
-  console.error(`Falta ${KEYS_PATH}. Corre primero scripts/demo.mjs para generar las llaves de Studio.`);
+if (!ENV_KEYS && !existsSync(KEYS_PATH)) {
+  console.error(
+    "Faltan llaves: define SELLER_PRIVATE_KEY y BUYER_PRIVATE_KEY, o corre scripts/demo.mjs para generarlas."
+  );
   process.exit(1);
 }
 
-const keys = JSON.parse(readFileSync(KEYS_PATH, "utf8"));
+const keys = ENV_KEYS || JSON.parse(readFileSync(KEYS_PATH, "utf8"));
 const sellerAccount = createAccount(keys.seller);
 const buyerAccount = createAccount(keys.buyer);
 const seller = createClient({ chain: studionet, account: sellerAccount });
@@ -78,7 +84,7 @@ async function readState() {
   ]);
   const total = Number(count);
   const ids = [];
-  for (let i = Math.max(0, total - 3); i < total; i++) ids.push(`ord-${i}`);
+  for (let i = Math.max(0, total - 3); i < total; i++) ids.push(`ms-${i}`);
   const orders = [];
   for (const orderId of ids) {
     try {
@@ -123,6 +129,9 @@ async function bodyJson(req) {
 }
 
 async function handleAction(action, payload) {
+  if (action === "health") {
+    return { ok: true, contract: CONTRACT_ADDRESS, seller: sellerAccount.address };
+  }
   if (action === "state") return readState();
 
   if (action === "create") {
@@ -133,11 +142,11 @@ async function handleAction(action, payload) {
       functionName: "get_order_count",
       args: []
     });
-    const orderId = `ord-${count}`;
+    const orderId = `ms-${count}`;
     const hash = await buyer.writeContract({
       address: CONTRACT_ADDRESS,
       functionName: "create_order",
-      args: [brief, 3600],
+      args: [[brief], [String(DEPOSIT_ATTO)], 3600],
       value: DEPOSIT_ATTO
     });
     await waitAccepted(buyer, hash, "create_order");
@@ -147,16 +156,20 @@ async function handleAction(action, payload) {
   const orderId = String(payload.orderId || "").trim();
   if (!orderId) throw new Error("Falta orderId. Crea una orden primero.");
   const current = await readOrder(orderId);
-  const status = String(current.status || "").toUpperCase();
+  const milestone = current.milestones?.[0] || {};
+  const status = String(milestone.status || "").toUpperCase();
 
-  if (action === "deliver" && !["FUNDED", "OPEN"].includes(status)) {
-    throw new Error(`La orden ${orderId} está en ${status || "sin estado"}, no se puede entregar.`);
+  if (action === "deliver" && status !== "CREATED") {
+    throw new Error(`La orden ${orderId} esta en ${status || "sin estado"}, no se puede entregar.`);
+  }
+  if (action === "approve" && status !== "DELIVERED") {
+    throw new Error(`La orden ${orderId} esta en ${status || "sin estado"}, no se puede aprobar.`);
   }
   if (action === "dispute" && status !== "DELIVERED") {
-    throw new Error(`La orden ${orderId} está en ${status || "sin estado"}, no se puede disputar.`);
+    throw new Error(`La orden ${orderId} esta en ${status || "sin estado"}, no se puede disputar.`);
   }
   if (action === "resolve" && status !== "DISPUTED") {
-    throw new Error(`La orden ${orderId} está en ${status || "sin estado"}, no se puede resolver.`);
+    throw new Error(`La orden ${orderId} esta en ${status || "sin estado"}, no se puede resolver.`);
   }
 
   if (action === "deliver") {
@@ -165,9 +178,19 @@ async function handleAction(action, payload) {
     const hash = await seller.writeContract({
       address: CONTRACT_ADDRESS,
       functionName: "submit_delivery",
-      args: [orderId, url, "Entrega generada por entropiav2"]
+      args: [orderId, 0, url, "Entrega generada por entropiav2"]
     });
     await waitAccepted(seller, hash, "submit_delivery");
+    return { orderId, hash, order: await readOrder(orderId) };
+  }
+
+  if (action === "approve") {
+    const hash = await buyer.writeContract({
+      address: CONTRACT_ADDRESS,
+      functionName: "approve_milestone",
+      args: [orderId, 0]
+    });
+    await waitAccepted(buyer, hash, "approve_milestone");
     return { orderId, hash, order: await readOrder(orderId) };
   }
 
@@ -175,10 +198,10 @@ async function handleAction(action, payload) {
     const reason = String(payload.reason || "La entrega no cumple el brief.").trim();
     const hash = await buyer.writeContract({
       address: CONTRACT_ADDRESS,
-      functionName: "dispute",
-      args: [orderId, reason]
+      functionName: "dispute_milestone",
+      args: [orderId, 0, reason]
     });
-    await waitAccepted(buyer, hash, "dispute");
+    await waitAccepted(buyer, hash, "dispute_milestone");
     return { orderId, hash, order: await readOrder(orderId) };
   }
 
@@ -186,7 +209,7 @@ async function handleAction(action, payload) {
     const hash = await buyer.writeContract({
       address: CONTRACT_ADDRESS,
       functionName: "resolve_dispute",
-      args: [orderId]
+      args: [orderId, 0]
     });
     await waitAccepted(buyer, hash, "resolve_dispute");
     return { orderId, hash, order: await readOrder(orderId) };
@@ -222,6 +245,14 @@ function serveStatic(res, pathname) {
 }
 
 const server = createServer(async (req, res) => {
+  res.setHeader("access-control-allow-origin", "*");
+  res.setHeader("access-control-allow-headers", "content-type");
+  res.setHeader("access-control-allow-methods", "GET,POST,OPTIONS");
+  if (req.method === "OPTIONS") {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
   const url = new URL(req.url, `http://${req.headers.host}`);
   if (url.pathname.startsWith("/api/")) {
     const action = url.pathname.slice("/api/".length);

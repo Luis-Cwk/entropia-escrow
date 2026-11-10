@@ -1,6 +1,12 @@
 {
-  "name": "genlayer-project",
+  "name": "entropia-escrow",
   "type": "module",
+  "scripts": {
+    "start": "node scripts/serve-demo.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "devDependencies": {
     "esbuild": "^0.25.0",
     "genlayer-js": "2.0.0-rc.2",

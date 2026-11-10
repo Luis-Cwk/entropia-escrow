@@ -20,6 +20,8 @@ MAX_PAGE_CHARS = 20000
 MAX_SCORE_GAP = 30
 MAX_MILESTONES = 10
 MIN_AMOUNT = 1
+# Buyer silence window: after this, anyone can trigger the same adjudication.
+REVIEW_PERIOD = 7 * 24 * 3600
 
 
 @gl.evm.contract_interface
@@ -88,7 +90,10 @@ class MilestoneEscrow(gl.Contract):
     - The buyer approves it and the tranche is released.
     - The buyer disputes it and GenLayer validators (LLM consensus over the
       delivered page) release or refund that tranche.
-    - The seller misses the deadline and the buyer claims the refund.
+    - The buyer goes silent: after REVIEW_PERIOD anyone can trigger the same
+      adjudication, so a delivered milestone cannot sit unresolved.
+    - The seller misses the deadline and the buyer claims the refund. Deliveries
+      after the deadline are rejected.
 
     Partial completion is the point: approved tranches are paid even if later
     milestones fail.
@@ -127,6 +132,19 @@ class MilestoneEscrow(gl.Contract):
         order["total_paid_atto"] = str(int(order["total_paid_atto"]) + int(ms["amount_atto"]))
         self._pay(order["seller"], ms["amount_atto"])
 
+    def _settle(self, order_id: str, order: dict, ms: dict, verdict: dict) -> str:
+        if verdict["decision"] == "release":
+            ms["status"] = STATUS_APPROVED
+            self._pay_milestone(order, ms)
+        else:
+            ms["status"] = STATUS_REFUNDED
+            self._pay(order["buyer"], ms["amount_atto"])
+        ms["verdict"] = verdict["decision"]
+        ms["verdict_reason"] = verdict["reason"]
+        ms["resolved_at"] = int(_now())
+        self._save(order_id, order)
+        return verdict["decision"]
+
     def _handle_leader_error(self, leaders_res, leader_fn) -> bool:
         leader_msg = leaders_res.message if hasattr(leaders_res, "message") else ""
         try:
@@ -152,7 +170,15 @@ class MilestoneEscrow(gl.Contract):
                 raise gl.vm.UserError(f"{ERROR_TRANSIENT} Delivery fetch failed: {type(e).__name__}")
             status = int(response.status)
             if 400 <= status < 500:
-                raise gl.vm.UserError(f"{ERROR_EXTERNAL} Delivery source returned {status}")
+                if status in (408, 429):
+                    raise gl.vm.UserError(f"{ERROR_TRANSIENT} Delivery source returned {status}")
+                # Permanent failure: a deterministic refund settles the milestone
+                # instead of leaving it disputed on every retry.
+                return {
+                    "decision": "refund",
+                    "score": 0,
+                    "reason": f"Delivery source returned {status}: permanent failure, no content to judge",
+                }
             if status >= 500:
                 raise gl.vm.UserError(f"{ERROR_TRANSIENT} Delivery source returned {status}")
             page = (response.body or b"").decode("utf-8", errors="replace")
@@ -288,6 +314,8 @@ Respond only with JSON: {{"decision": "release" or "refund", "score": 0-100, "re
         ms = self._milestone(order, milestone_index)
         if ms["status"] != STATUS_CREATED:
             raise gl.vm.UserError(f"{ERROR_EXPECTED} Milestone is not open for delivery")
+        if int(_now()) >= int(order["deadline"]):
+            raise gl.vm.UserError(f"{ERROR_EXPECTED} Deadline passed: delivery rejected")
         if not delivery_url.startswith("http"):
             raise gl.vm.UserError(f"{ERROR_EXPECTED} Delivery URL must be http(s)")
 
@@ -362,15 +390,22 @@ Respond only with JSON: {{"decision": "release" or "refund", "score": 0-100, "re
             ms["delivery_note"],
             ms["dispute_reason"],
         )
+        return self._settle(order_id, order, ms, verdict)
 
-        if verdict["decision"] == "release":
-            ms["status"] = STATUS_APPROVED
-            self._pay_milestone(order, ms)
-        else:
-            ms["status"] = STATUS_REFUNDED
-            self._pay(order["buyer"], ms["amount_atto"])
-        ms["verdict"] = verdict["decision"]
-        ms["verdict_reason"] = verdict["reason"]
-        ms["resolved_at"] = int(_now())
-        self._save(order_id, order)
-        return verdict["decision"]
+    @gl.public.write
+    def resolve_stale_delivery(self, order_id: str, milestone_index: int) -> str:
+        """Settle a delivered milestone the buyer never approved or disputed."""
+        order = self._load(order_id)
+        ms = self._milestone(order, milestone_index)
+        if ms["status"] != STATUS_DELIVERED:
+            raise gl.vm.UserError(f"{ERROR_EXPECTED} Milestone is not awaiting review")
+        if int(_now()) < int(ms["delivered_at"]) + REVIEW_PERIOD:
+            raise gl.vm.UserError(f"{ERROR_EXPECTED} Review window still open")
+
+        verdict = self._adjudicate(
+            ms["description"],
+            ms["delivery_url"],
+            ms["delivery_note"],
+            "Buyer went silent: no approval or dispute within the review window",
+        )
+        return self._settle(order_id, order, ms, verdict)

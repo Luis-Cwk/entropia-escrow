@@ -14,6 +14,7 @@ const els = {
 };
 
 const actionButtons = Array.from(document.querySelectorAll("[data-action]"));
+const API_BASE = String(window.ENTROPIA_API || "").replace(/\/$/, "");
 let orderId = localStorage.getItem("entropia-studio-order") || "";
 let latestStatus = "";
 let busy = false;
@@ -35,7 +36,8 @@ function applyAvailability() {
   const status = latestStatus.toUpperCase();
   const allowed = {
     create: true,
-    deliver: status === "FUNDED" || status === "OPEN",
+    deliver: status === "CREATED",
+    approve: status === "DELIVERED",
     dispute: status === "DELIVERED",
     resolve: status === "DISPUTED"
   };
@@ -50,7 +52,7 @@ function setBusy(value) {
 }
 
 async function request(path, options = {}) {
-  const response = await fetch(path, {
+  const response = await fetch(`${API_BASE}${path}`, {
     headers: { "content-type": "application/json" },
     ...options
   });
@@ -82,12 +84,13 @@ function renderState(state) {
   }
 
   orderId = order.orderId;
-  latestStatus = String(order.status || "");
+  const milestone = order.milestones?.[0] || {};
+  latestStatus = String(milestone.status || "");
   localStorage.setItem("entropia-studio-order", orderId);
   els.order.textContent = order.orderId;
-  els.status.textContent = order.status || "Sin datos";
-  els.verdict.textContent = order.verdict || "Sin datos";
-  if (order.verdict_reason) els.verdict.title = order.verdict_reason;
+  els.status.textContent = milestone.status || "Sin datos";
+  els.verdict.textContent = milestone.verdict || "Sin datos";
+  if (milestone.verdict_reason) els.verdict.title = milestone.verdict_reason;
   applyAvailability();
 }
 
@@ -103,6 +106,7 @@ async function run(action) {
   const labels = {
     create: "Creando la orden y depositando 0.5 GEN en Studio…",
     deliver: "Registrando la entrega del seller…",
+    approve: "Aprobando el hito y liberando el pago…",
     dispute: "Abriendo la disputa del comprador…",
     resolve: "Ejecutando el juicio con consenso (web + LLM)…"
   };
@@ -130,7 +134,8 @@ async function run(action) {
       localStorage.setItem("entropia-studio-order", orderId);
     }
     log(`Listo · ${result.orderId || "state"} · tx ${result.hash || "sin hash"}`);
-    if (result.order?.verdict) log(`Veredicto: ${result.order.verdict}`);
+    const milestone = result.order?.milestones?.[0];
+    if (milestone?.verdict) log(`Veredicto: ${milestone.verdict} · ${milestone.verdict_reason || ""}`);
     await refresh();
   } catch (error) {
     log(`Error: ${error.message}`);

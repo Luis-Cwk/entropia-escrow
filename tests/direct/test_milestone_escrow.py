@@ -197,3 +197,73 @@ def test_seller_cannot_buy_own_service(direct_vm, direct_deploy, direct_bob):
     direct_vm.value = MS1
     with direct_vm.expect_revert("Seller cannot buy"):
         contract.create_order([BRIEF1], [MS1], 3600)
+
+
+def test_late_delivery_rejected(direct_vm, direct_deploy, direct_alice, direct_bob):
+    """A delivery after the order deadline is rejected and the refund path stays open."""
+    contract = _deploy(direct_deploy, direct_bob)
+    order_id = _create(direct_vm, contract, direct_alice)
+
+    direct_vm.warp("2030-01-01T00:00:00Z")
+    direct_vm.sender = direct_bob
+    with direct_vm.expect_revert("Deadline passed"):
+        contract.submit_delivery(order_id, 0, URL1, NOTE)
+    assert contract.get_order(order_id)["milestones"][0]["status"] == "CREATED"
+
+    direct_vm.sender = direct_alice
+    contract.claim_timeout(order_id, 0)
+    assert contract.get_order(order_id)["milestones"][0]["status"] == "REFUNDED"
+
+
+def test_buyer_inactivity_resolves_after_review_window(direct_vm, direct_deploy, direct_alice, direct_bob):
+    """Buyer silence is bounded: after the review window anyone settles the milestone."""
+    contract = _deploy(direct_deploy, direct_bob)
+    order_id = _create(direct_vm, contract, direct_alice)
+    _deliver(direct_vm, contract, direct_bob, order_id, 0, URL1)
+
+    _mock_release(direct_vm)
+    direct_vm.sender = direct_alice
+    with direct_vm.expect_revert("Review window still open"):
+        contract.resolve_stale_delivery(order_id, 0)
+
+    direct_vm.warp("2030-01-01T00:00:00Z")
+    direct_vm.sender = direct_bob  # the seller, not the buyer: permissionless
+    assert contract.resolve_stale_delivery(order_id, 0) == "release"
+
+    order = contract.get_order(order_id)
+    assert order["milestones"][0]["status"] == "APPROVED"
+    assert order["total_paid_atto"] == str(MS1)
+
+
+def test_http_4xx_settles_as_refund(direct_vm, direct_deploy, direct_alice, direct_bob):
+    """A permanent delivery failure settles as a refund instead of staying disputed."""
+    contract = _deploy(direct_deploy, direct_bob)
+    order_id = _create(direct_vm, contract, direct_alice)
+    _deliver(direct_vm, contract, direct_bob, order_id, 1, URL2)
+
+    direct_vm.sender = direct_alice
+    contract.dispute_milestone(order_id, 1, DISPUTE)
+
+    direct_vm.mock_web(r".*example\.com.*", {"status": 404, "body": "not found"})
+    assert contract.resolve_dispute(order_id, 1) == "refund"
+
+    order = contract.get_order(order_id)
+    assert order["milestones"][1]["status"] == "REFUNDED"
+    assert "404" in order["milestones"][1]["verdict_reason"]
+    assert order["total_paid_atto"] == "0"
+
+
+def test_http_429_stays_transient(direct_vm, direct_deploy, direct_alice, direct_bob):
+    """Rate limiting is not a permanent failure: the dispute stays open and retryable."""
+    contract = _deploy(direct_deploy, direct_bob)
+    order_id = _create(direct_vm, contract, direct_alice)
+    _deliver(direct_vm, contract, direct_bob, order_id, 0, URL1)
+
+    direct_vm.sender = direct_alice
+    contract.dispute_milestone(order_id, 0, DISPUTE)
+
+    direct_vm.mock_web(r".*example\.com.*", {"status": 429, "body": "slow down"})
+    with direct_vm.expect_revert("[TRANSIENT]"):
+        contract.resolve_dispute(order_id, 0)
+
+    assert contract.get_order(order_id)["milestones"][0]["status"] == "DISPUTED"
