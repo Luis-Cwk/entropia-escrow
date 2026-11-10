@@ -1,6 +1,7 @@
 const els = {
   contract: document.getElementById("state-contract"),
   seller: document.getElementById("state-seller"),
+  buyer: document.getElementById("state-buyer"),
   count: document.getElementById("state-count"),
   order: document.getElementById("state-order"),
   status: document.getElementById("state-status"),
@@ -69,6 +70,7 @@ function currentOrder(state) {
 function renderState(state) {
   els.contract.textContent = state.contract;
   els.seller.textContent = state.seller;
+  if (els.buyer) els.buyer.textContent = state.buyer || "Sin datos";
   els.count.textContent = String(state.orderCount);
   els.contractLink.href = `https://explorer-studio.genlayer.com/address/${state.contract}`;
   els.network.textContent = "Studio · gasless";
